@@ -1,0 +1,93 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'com.rapier'
+version = '0.1.0-SNAPSHOT'
+
+def javaVersion = JavaVersion.VERSION_17
+sourceCompatibility = javaVersion
+targetCompatibility = javaVersion
+
+sourceSets {
+    main {
+        java {
+            srcDirs += 'build/generated/java'
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+application {
+    mainClass = 'com.rapier.examples.BouncingBall'
+}
+
+def os = org.gradle.internal.os.OperatingSystem.current()
+
+def nativeLibName = os.isWindows() ? 'rapier2d_jni.dll' : (os.isMacOsX() ? 'librapier2d_jni.dylib' : 'librapier2d_jni.so')
+
+def nativeProjectDir = file('native/rapier2d_jni')
+def bindgenDir = file('build/generated')
+
+def nativeBuildDir = file("${buildDir}/native")
+
+// Build the Rust JNI library
+ tasks.register('buildNative', Exec) {
+    workingDir nativeProjectDir
+    commandLine 'cargo', 'build', '--release'
+}
+
+tasks.register('generateBindings', Exec) {
+    def rustdocJson = file("${nativeProjectDir}/target/doc/rapier2d_f64.json")
+    def javaOut = file("${bindgenDir}/java")
+    def rustOut = file("${projectDir}/native/rapier2d_jni/src/generated.rs")
+    def manifest = file("${bindgenDir}/manifest/rapier2d-f64.json")
+    def report = file("${bindgenDir}/manifest/rapier2d-f64-report.json")
+
+    workingDir nativeProjectDir
+    commandLine 'cargo', '+nightly', 'rustdoc', '-p', 'rapier2d-f64', '--lib', '--',
+        '-Z', 'unstable-options', '--output-format', 'json'
+    doLast {
+        exec {
+            commandLine 'python', "${projectDir}/tools/rapier_bindgen/generate_bindings.py",
+                    '--input', rustdocJson.absolutePath,
+                    '--java-out', javaOut.absolutePath,
+                    '--rust-out', rustOut.absolutePath,
+                    '--manifest', manifest.absolutePath,
+                    '--report', report.absolutePath
+        }
+    }
+}
+
+// Copy the library into build/native
+ tasks.register('copyNative', Copy) {
+    dependsOn 'buildNative'
+    from(new File(nativeProjectDir, 'target/release')) {
+        include nativeLibName
+    }
+    into nativeBuildDir
+}
+
+ tasks.register('runExample', JavaExec) {
+    dependsOn 'classes'
+    dependsOn 'copyNative'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = (project.findProperty('exampleClass') ?: 'com.rapier.examples.BouncingBall')
+    systemProperty 'java.library.path', nativeBuildDir.absolutePath
+}
+
+ tasks.named('build') {
+    dependsOn 'copyNative'
+}
