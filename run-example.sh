@@ -5,6 +5,7 @@ if [ -z "$1" ]; then
     echo "Available examples:"
     echo "  BouncingBallExample"
     echo "  MultiObjectExample"
+    echo "  ComprehensiveExample"
     exit 1
 fi
 

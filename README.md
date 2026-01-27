@@ -82,6 +82,14 @@ java -cp "target/classes:example/target/classes:$(mvn dependency:build-classpath
   com.rapier.example.MultiObjectExample
 ```
 
+Or use the convenient scripts:
+```bash
+./build.sh                             # Build everything
+./run-example.sh BouncingBallExample   # Run bouncing ball example
+./run-example.sh MultiObjectExample    # Run multi-object example
+./run-example.sh ComprehensiveExample  # Run comprehensive test suite
+```
+
 ## API Overview
 
 ### PhysicsWorld
