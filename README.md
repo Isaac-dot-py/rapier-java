@@ -4,12 +4,23 @@ Java 17 bindings for the [Rapier](https://github.com/dimforge/rapier) 2D physics
 
 ## Features
 
-- ✅ Full Java 17 bindings for Rapier 2D physics engine
+- ✅ **Complete Rapier 2D API** - full coverage of Rapier functionality
 - ✅ Double precision floating point (f64)
 - ✅ **Data-based API** - direct JNA passthrough, no wrapper classes
 - ✅ Handle-based access matching native Rapier patterns
 - ✅ Native library automatically extracted and loaded from resources
 - ✅ Cross-platform support (Linux, macOS, Windows)
+
+### Supported Features
+
+- **Rigid Bodies**: Dynamic, Fixed, Kinematic (position/velocity based)
+- **Colliders**: Ball, Cuboid, Capsule, Segment, Triangle, Heightfield
+- **Joints**: Revolute, Prismatic, Fixed, Rope, Spring
+- **Physics Properties**: Mass, Inertia, Damping, Gravity Scale, CCD
+- **Material Properties**: Friction, Restitution, Density
+- **Coefficient Combine Rules**: Average, Min, Multiply, Max
+- **Interaction Groups**: Collision groups, Solver groups
+- **Motors**: Position/velocity targeting with configurable stiffness/damping
 
 ## Requirements
 
@@ -107,6 +118,7 @@ Or use the convenient scripts:
 ./run-example.sh MultiObjectExample    # Run multi-object example
 ./run-example.sh ComprehensiveExample  # Run comprehensive test suite
 ./run-example.sh NewFeaturesExample    # Run new features demo
+./run-example.sh FullApiExample        # Run complete API demo (joints, etc.)
 ```
 
 **Windows PowerShell:**
@@ -132,28 +144,45 @@ RapierNative rapier = Rapier.create();
 - `rapier_world_create(double gravity_x, double gravity_y)` - Create a world, returns handle
 - `rapier_world_step(long world)` - Advance simulation by one timestep
 - `rapier_world_destroy(long world)` - Clean up the world
+- `rapier_world_set_gravity(long world, double x, double y)` - Set gravity
+- `rapier_world_set_timestep(long world, double dt)` - Set timestep
+- `rapier_world_get_num_rigid_bodies(long world)` - Get body count
 
 ### Rigid Body Functions
 
 - `rapier_rigid_body_create_dynamic(long world, double x, double y)` - Create movable body
 - `rapier_rigid_body_create_fixed(long world, double x, double y)` - Create static body
-- `rapier_rigid_body_get_position(long world, long body, DoubleByReference x, DoubleByReference y)` - Query position
-- `rapier_rigid_body_get_rotation(long world, long body)` - Query rotation
-- `rapier_rigid_body_set_translation(long world, long body, double x, double y, boolean wake)` - Set position
-- `rapier_rigid_body_set_linvel(long world, long body, double vx, double vy, boolean wake)` - Set velocity
-- `rapier_rigid_body_apply_impulse(long world, long body, double ix, double iy, boolean wake)` - Apply impulse
-- `rapier_rigid_body_set_linear_damping(long world, long body, double damping)` - Set damping
-- `rapier_rigid_body_get_mass(long world, long body)` - Query mass
+- `rapier_rigid_body_create_kinematic_velocity_based(...)` - Create kinematic body
+- `rapier_rigid_body_create_kinematic_position_based(...)` - Create kinematic body
+- `rapier_rigid_body_get_position(...)` / `set_translation(...)` - Position
+- `rapier_rigid_body_get_linvel(...)` / `set_linvel(...)` - Velocity
+- `rapier_rigid_body_apply_impulse(...)` / `add_force(...)` - Forces
+- `rapier_rigid_body_set_gravity_scale(...)` - Gravity scale
+- `rapier_rigid_body_enable_ccd(...)` - Continuous collision detection
+- `rapier_rigid_body_lock_rotations(...)` / `lock_translations(...)` - Lock axes
 
 ### Collider Functions
 
-- `rapier_collider_create_cuboid(long world, long body, double half_w, double half_h)` - Create box
-- `rapier_collider_create_ball(long world, long body, double radius)` - Create circle
-- `rapier_collider_set_restitution(long world, long collider, double restitution)` - Set bounciness
-- `rapier_collider_set_friction(long world, long collider, double friction)` - Set friction
-- `rapier_collider_set_sensor(long world, long collider, boolean is_sensor)` - Make sensor
-- `rapier_collider_set_density(long world, long collider, double density)` - Set density
-- `rapier_collider_set_collision_groups(long world, long collider, int memberships, int filter)` - Set groups
+- `rapier_collider_create_cuboid(...)` - Create box shape
+- `rapier_collider_create_ball(...)` - Create circle shape
+- `rapier_collider_create_capsule(...)` - Create capsule shape
+- `rapier_collider_create_segment(...)` - Create line segment
+- `rapier_collider_create_triangle(...)` - Create triangle
+- `rapier_collider_set_friction(...)` / `set_restitution(...)` - Material
+- `rapier_collider_set_friction_combine_rule(...)` - Combine rule (0=Average, 1=Min, 2=Multiply, 3=Max)
+- `rapier_collider_set_sensor(...)` - Make sensor (trigger)
+- `rapier_collider_set_density(...)` / `set_mass(...)` - Mass properties
+- `rapier_collider_set_collision_groups(...)` / `set_solver_groups(...)` - Groups
+
+### Joint Functions
+
+- `rapier_joint_create_revolute(...)` - Hinge joint (rotation only)
+- `rapier_joint_create_prismatic(...)` - Slider joint (translation only)
+- `rapier_joint_create_fixed(...)` - Fixed joint (no relative motion)
+- `rapier_joint_create_rope(...)` - Distance limit joint
+- `rapier_joint_create_spring(...)` - Spring-damper joint
+- `rapier_joint_set_motor_velocity(...)` - Motor control
+- `rapier_joint_set_limits(...)` - Joint limits
 
 ## Architecture
 
