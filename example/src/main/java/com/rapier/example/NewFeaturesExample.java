@@ -76,7 +76,7 @@ public class NewFeaturesExample {
         // Ball should have fallen through sensor and stopped on ground
         rapier.rapier_rigid_body_get_position(world, ball, x, y);
         System.out.printf("  Ball final height: %.2f (passed through sensor at y=3.0)%n", y.getValue());
-        System.out.println("  ✓ Sensor collider allows objects to pass through");
+        System.out.println("  [OK] Sensor collider allows objects to pass through");
         
         rapier.rapier_world_destroy(world);
     }
@@ -107,7 +107,7 @@ public class NewFeaturesExample {
         double heavyMass = rapier.rapier_rigid_body_get_mass(world, heavyBall);
         System.out.printf("  Light ball mass: %.4f%n", lightMass);
         System.out.printf("  Heavy ball mass: %.4f%n", heavyMass);
-        System.out.println("  ✓ Density affects mass correctly");
+        System.out.println("  [OK] Density affects mass correctly");
         
         rapier.rapier_world_destroy(world);
     }
@@ -137,7 +137,7 @@ public class NewFeaturesExample {
         double newInertia = rapier.rapier_rigid_body_get_angular_inertia(world, body);
         System.out.printf("  After adding 5.0 mass - New mass: %.4f%n", newMass);
         System.out.printf("  After adding 5.0 mass - New inertia: %.4f%n", newInertia);
-        System.out.println("  ✓ Additional mass increases total mass and inertia");
+        System.out.println("  [OK] Additional mass increases total mass and inertia");
         
         rapier.rapier_world_destroy(world);
     }
@@ -195,7 +195,7 @@ public class NewFeaturesExample {
         
         rapier.rapier_rigid_body_get_position(world, ball3, x, y);
         System.out.printf("  Ball3 height: %.2f (collides with ground)%n", y.getValue());
-        System.out.println("  ✓ Collision groups control which objects can collide");
+        System.out.println("  [OK] Collision groups control which objects can collide");
         
         rapier.rapier_world_destroy(world);
     }
@@ -203,17 +203,13 @@ public class NewFeaturesExample {
     private static void testDamping() {
         long world = rapier.rapier_world_create(0.0, 0.0); // No gravity for clearer test
         
-        // Create ground
-        long ground = rapier.rapier_rigid_body_create_fixed(world, 0.0, 0.0);
-        rapier.rapier_collider_create_cuboid(world, ground, 10.0, 0.5);
-        
-        // Create a ball without damping
-        long noDampingBall = rapier.rapier_rigid_body_create_dynamic(world, -3.0, 2.0);
+        // Create a ball without damping - starts at origin
+        long noDampingBall = rapier.rapier_rigid_body_create_dynamic(world, 0.0, 2.0);
         rapier.rapier_collider_create_ball(world, noDampingBall, 0.5);
         rapier.rapier_rigid_body_set_linvel(world, noDampingBall, 5.0, 0.0, true);
         
-        // Create a ball with high linear damping
-        long dampedBall = rapier.rapier_rigid_body_create_dynamic(world, 3.0, 2.0);
+        // Create a ball with high linear damping - starts at origin (different Y to avoid collision)
+        long dampedBall = rapier.rapier_rigid_body_create_dynamic(world, 0.0, 4.0);
         rapier.rapier_collider_create_ball(world, dampedBall, 0.5);
         rapier.rapier_rigid_body_set_linear_damping(world, dampedBall, 2.0);
         rapier.rapier_rigid_body_set_linvel(world, dampedBall, 5.0, 0.0, true);
@@ -225,7 +221,7 @@ public class NewFeaturesExample {
         System.out.printf("  Damped ball - linear damping: %.2f%n", damping);
         
         // Test angular damping
-        long spinningBody = rapier.rapier_rigid_body_create_dynamic(world, 0.0, 5.0);
+        long spinningBody = rapier.rapier_rigid_body_create_dynamic(world, 0.0, 6.0);
         rapier.rapier_collider_create_cuboid(world, spinningBody, 0.5, 0.5);
         rapier.rapier_rigid_body_set_angular_damping(world, spinningBody, 1.5);
         double angularDamping = rapier.rapier_rigid_body_get_angular_damping(world, spinningBody);
@@ -237,13 +233,13 @@ public class NewFeaturesExample {
         }
         
         rapier.rapier_rigid_body_get_position(world, noDampingBall, x, y);
-        double noDampingX = x.getValue();
+        double noDampingDist = x.getValue(); // Distance traveled from origin
         
         rapier.rapier_rigid_body_get_position(world, dampedBall, x, y);
-        double dampedX = x.getValue();
+        double dampedDist = x.getValue(); // Distance traveled from origin
         
-        System.out.printf("  After simulation - No damping X: %.2f, Damped X: %.2f%n", noDampingX, dampedX);
-        System.out.println("  ✓ Damping slows down objects over time");
+        System.out.printf("  After simulation - No damping traveled: %.2f, Damped traveled: %.2f%n", noDampingDist, dampedDist);
+        System.out.println("  [OK] Damping slows down objects over time");
         
         rapier.rapier_world_destroy(world);
     }

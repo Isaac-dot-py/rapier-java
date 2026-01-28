@@ -73,7 +73,7 @@ public class FullApiExample {
         double restitution = rapier.rapier_collider_get_restitution(world, groundCollider);
         System.out.printf("  Friction: %.2f, Restitution: %.2f%n", friction, restitution);
         
-        System.out.println("  ✓ Coefficient combine rules work correctly");
+        System.out.println("  [OK] Coefficient combine rules work correctly");
         
         rapier.rapier_world_destroy(world);
     }
@@ -136,7 +136,7 @@ public class FullApiExample {
         rapier.rapier_rigid_body_get_position(world, body2, x, y);
         System.out.printf("  Spring body position: (%.2f, %.2f)%n", x.getValue(), y.getValue());
         
-        System.out.println("  ✓ Joints work correctly");
+        System.out.println("  [OK] Joints work correctly");
         
         rapier.rapier_world_destroy(world);
     }
@@ -173,7 +173,7 @@ public class FullApiExample {
         rapier.rapier_rigid_body_get_position(world, kinematicPos, x, y);
         System.out.printf("  Kinematic position body position: (%.2f, %.2f)%n", x.getValue(), y.getValue());
         
-        System.out.println("  ✓ Kinematic bodies work correctly");
+        System.out.println("  [OK] Kinematic bodies work correctly");
         
         rapier.rapier_world_destroy(world);
     }
@@ -229,7 +229,7 @@ public class FullApiExample {
         rapier.rapier_rigid_body_reset_forces(world, body, true);
         rapier.rapier_rigid_body_reset_torques(world, body, true);
         
-        System.out.println("  ✓ Rigid body properties work correctly");
+        System.out.println("  [OK] Rigid body properties work correctly");
         
         rapier.rapier_world_destroy(world);
     }
@@ -277,7 +277,7 @@ public class FullApiExample {
         System.out.printf("  Solver groups: memberships=0x%04X, filter=0x%04X%n", 
             memberships.getValue(), filter.getValue());
         
-        System.out.println("  ✓ Additional collider shapes work correctly");
+        System.out.println("  [OK] Additional collider shapes work correctly");
         
         rapier.rapier_world_destroy(world);
     }
@@ -325,7 +325,7 @@ public class FullApiExample {
         rapier.rapier_world_get_gravity(world, gx, gy);
         System.out.printf("  Modified gravity: (%.2f, %.2f)%n", gx.getValue(), gy.getValue());
         
-        System.out.println("  ✓ World queries work correctly");
+        System.out.println("  [OK] World queries work correctly");
         
         rapier.rapier_world_destroy(world);
     }

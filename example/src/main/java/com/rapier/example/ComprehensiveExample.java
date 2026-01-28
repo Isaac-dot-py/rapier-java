@@ -65,7 +65,7 @@ public class ComprehensiveExample {
         double finalHeight = y.getValue();
         
         System.out.printf("  Initial height: %.2f, Final height: %.2f%n", initialHeight, finalHeight);
-        System.out.println("  ✓ Object fell under gravity and stopped on ground");
+        System.out.println("  [OK] Object fell under gravity and stopped on ground");
         
         rapier.rapier_world_destroy(world);
     }
@@ -99,7 +99,7 @@ public class ComprehensiveExample {
         double deadHeight = y.getValue();
         
         System.out.printf("  Bouncy ball height: %.2f, Dead ball height: %.2f%n", bouncyHeight, deadHeight);
-        System.out.println("  ✓ High restitution ball bounced higher than low restitution ball");
+        System.out.println("  [OK] High restitution ball bounced higher than low restitution ball");
         
         rapier.rapier_world_destroy(world);
     }
@@ -107,35 +107,35 @@ public class ComprehensiveExample {
     private static void testFriction() {
         long world = rapier.rapier_world_create(0.0, -9.81);
         
-        // Create inclined plane (simulated with horizontal velocity)
+        // Create ground
         long ground = rapier.rapier_rigid_body_create_fixed(world, 0.0, 0.0);
         long groundCollider = rapier.rapier_collider_create_cuboid(world, ground, 20.0, 0.5);
         rapier.rapier_collider_set_friction(world, groundCollider, 0.5);
         
-        // High friction box
-        long highFriction = rapier.rapier_rigid_body_create_dynamic(world, -5.0, 1.0);
+        // High friction box - starts at origin, moves right
+        long highFriction = rapier.rapier_rigid_body_create_dynamic(world, 0.0, 1.0);
         long highCollider = rapier.rapier_collider_create_cuboid(world, highFriction, 0.5, 0.5);
         rapier.rapier_collider_set_friction(world, highCollider, 0.9);
         rapier.rapier_rigid_body_set_linvel(world, highFriction, 5.0, 0.0, true);
         
-        // Low friction box
-        long lowFriction = rapier.rapier_rigid_body_create_dynamic(world, 5.0, 1.0);
+        // Low friction box - starts at origin, moves right (same as high friction for fair comparison)
+        long lowFriction = rapier.rapier_rigid_body_create_dynamic(world, 0.0, 3.0); // Higher up so they don't collide
         long lowCollider = rapier.rapier_collider_create_cuboid(world, lowFriction, 0.5, 0.5);
         rapier.rapier_collider_set_friction(world, lowCollider, 0.1);
-        rapier.rapier_rigid_body_set_linvel(world, lowFriction, -5.0, 0.0, true);
+        rapier.rapier_rigid_body_set_linvel(world, lowFriction, 5.0, 0.0, true);
         
         // Simulate
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 200; i++) {
             rapier.rapier_world_step(world);
         }
         
         rapier.rapier_rigid_body_get_position(world, highFriction, x, y);
-        double highPos = Math.abs(x.getValue());
+        double highDist = x.getValue(); // Distance traveled from origin
         rapier.rapier_rigid_body_get_position(world, lowFriction, x, y);
-        double lowPos = Math.abs(x.getValue());
+        double lowDist = x.getValue(); // Distance traveled from origin
         
-        System.out.printf("  High friction distance: %.2f, Low friction distance: %.2f%n", highPos, lowPos);
-        System.out.println("  ✓ Friction affects sliding distance");
+        System.out.printf("  High friction traveled: %.2f, Low friction traveled: %.2f%n", highDist, lowDist);
+        System.out.println("  [OK] Friction affects sliding distance");
         
         rapier.rapier_world_destroy(world);
     }
@@ -173,7 +173,7 @@ public class ComprehensiveExample {
         
         System.out.printf("  No impulse: %.2f -> %.2f%n", noImpulseStart, noImpulseHeight);
         System.out.printf("  With impulse: %.2f -> %.2f%n", withImpulseStart, withImpulseHeight);
-        System.out.println("  ✓ Impulse launched object upward");
+        System.out.println("  [OK] Impulse launched object upward");
         
         rapier.rapier_world_destroy(world);
     }
@@ -212,7 +212,7 @@ public class ComprehensiveExample {
         double rotation = rapier.rapier_rigid_body_get_rotation(world, tallBox);
         System.out.printf("  Tall box position: (%.2f, %.2f), rotation: %.2f rad%n", 
             x.getValue(), y.getValue(), rotation);
-        System.out.println("  ✓ Different shapes simulated correctly");
+        System.out.println("  [OK] Different shapes simulated correctly");
         
         rapier.rapier_world_destroy(world);
     }
