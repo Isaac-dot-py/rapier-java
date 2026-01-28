@@ -46,3 +46,4 @@ native-lib/Cargo.lock
 *.swp
 *.swo
 *~
+src/main/resources/native/rapier_java_ffi.dll
