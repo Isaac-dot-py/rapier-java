@@ -5,7 +5,6 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.DoubleByReference;
 import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.ByteByReference;
 
 /**
  * JNA interface to the Rapier native library.
@@ -238,8 +237,10 @@ public interface RapierNative extends Library {
     
     boolean rapier_joint_set_contacts_enabled(long world_handle, long joint_handle, boolean enabled);
     
-    /** @param axis 0=X, 1=Y, 2=AngX */
-    /** @param model 0=AccelerationBased, 1=ForceBased */
+    /** 
+     * @param axis 0=X, 1=Y, 2=AngX
+     * @param model 0=AccelerationBased, 1=ForceBased 
+     */
     boolean rapier_joint_set_motor_model(long world_handle, long joint_handle, int axis, int model);
     
     /** @param axis 0=X, 1=Y, 2=AngX */

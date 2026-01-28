@@ -1133,6 +1133,9 @@ pub extern "C" fn rapier_collider_create_heightfield(
     scale_x: f64,
     scale_y: f64,
 ) -> ColliderHandle {
+    if heights.is_null() || num_heights == 0 {
+        return usize::MAX;
+    }
     if let Some(world) = get_world(world_handle) {
         let rb_handle = rapier2d_f64::dynamics::RigidBodyHandle::from_raw_parts(body_handle as u32, 0);
         let heights_slice = unsafe { std::slice::from_raw_parts(heights, num_heights) };
