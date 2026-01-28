@@ -74,6 +74,9 @@ public class Collider {
      * - The memberships of collider A have at least one bit in common with the filter of collider B
      * - AND the memberships of collider B have at least one bit in common with the filter of collider A
      * 
+     * Note: Java uses signed 32-bit integers, so use -1 (0xFFFFFFFF) for "all groups".
+     * Bit patterns are preserved correctly when passed to the native layer.
+     * 
      * @param memberships A bitmask indicating which groups this collider belongs to
      * @param filter A bitmask indicating which groups this collider can collide with
      */
@@ -83,6 +86,10 @@ public class Collider {
     
     /**
      * Gets the collision groups for this collider.
+     * 
+     * Note: Values may be negative in Java's signed representation when high bits are set.
+     * Use Integer.toUnsignedLong() if you need the unsigned value for display purposes.
+     * 
      * @return An array of two integers: [memberships, filter]
      */
     public int[] getCollisionGroups() {

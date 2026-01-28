@@ -140,9 +140,10 @@ public class NewFeaturesExample {
         // Default: memberships = 0xFFFFFFFF, filter = 0xFFFFFFFF (collides with all)
         
         // Define collision groups
+        // In Java, use -1 for "all groups" (0xFFFFFFFF) since Java uses signed integers
         int GROUP_1 = 1;  // 0b0001
         int GROUP_2 = 2;  // 0b0010
-        int ALL_GROUPS = 0xFFFFFFFF;
+        int ALL_GROUPS = -1; // Same bit pattern as 0xFFFFFFFF
         
         // Create a ball in GROUP_1 that only collides with GROUP_1
         RigidBody ball1 = world.createDynamicRigidBody(-2.0, 5.0);

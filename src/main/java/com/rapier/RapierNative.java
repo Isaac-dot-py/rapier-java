@@ -53,6 +53,7 @@ interface RapierNative extends Library {
     double rapier_collider_get_density(long world_handle, long collider_handle);
     
     // Collision groups functions
+    // Note: Java uses signed int but the bit patterns are preserved correctly for FFI
     boolean rapier_collider_set_collision_groups(long world_handle, long collider_handle, int memberships, int filter);
     boolean rapier_collider_get_collision_groups(long world_handle, long collider_handle, IntByReference out_memberships, IntByReference out_filter);
 }
