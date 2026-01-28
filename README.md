@@ -18,14 +18,28 @@ Java 17 bindings for the [Rapier](https://github.com/dimforge/rapier) 2D physics
 
 ## Building
 
-### Build the Native Library
+### Option 1: Use Build Scripts (Recommended)
+
+**Linux/macOS:**
+```bash
+./build.sh
+```
+
+**Windows PowerShell:**
+```powershell
+.\build.ps1
+```
+
+### Option 2: Manual Build Steps
+
+#### Build the Native Library
 
 ```bash
 cd native-lib
 cargo build --release
 ```
 
-### Build the Java Library
+#### Build the Java Library
 
 ```bash
 mvn clean compile
@@ -83,11 +97,21 @@ java -cp "target/classes:example/target/classes:$(mvn dependency:build-classpath
 ```
 
 Or use the convenient scripts:
+
+**Linux/macOS:**
 ```bash
 ./build.sh                             # Build everything
 ./run-example.sh BouncingBallExample   # Run bouncing ball example
 ./run-example.sh MultiObjectExample    # Run multi-object example
 ./run-example.sh ComprehensiveExample  # Run comprehensive test suite
+```
+
+**Windows PowerShell:**
+```powershell
+.\build.ps1                            # Build everything
+.\run-example.ps1 BouncingBallExample  # Run bouncing ball example
+.\run-example.ps1 MultiObjectExample   # Run multi-object example
+.\run-example.ps1 ComprehensiveExample # Run comprehensive test suite
 ```
 
 ## API Overview
