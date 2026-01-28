@@ -7,10 +7,15 @@ import com.sun.jna.ptr.DoubleByReference;
 import com.sun.jna.ptr.IntByReference;
 
 /**
- * Low-level JNA interface to the Rapier native library.
+ * JNA interface to the Rapier native library.
  * This interface maps directly to the C FFI functions.
+ * 
+ * All functions operate on handles (long values) that represent native objects.
+ * The user is responsible for managing handles and calling appropriate destroy functions.
+ * 
+ * Use {@link Rapier#create()} to obtain an instance of this interface.
  */
-interface RapierNative extends Library {
+public interface RapierNative extends Library {
     // World management
     long rapier_world_create(double gravity_x, double gravity_y);
     void rapier_world_destroy(long world_handle);

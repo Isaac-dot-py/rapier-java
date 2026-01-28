@@ -1,6 +1,8 @@
 package com.rapier.example;
 
 import com.rapier.*;
+import com.sun.jna.ptr.DoubleByReference;
+import com.sun.jna.ptr.IntByReference;
 
 /**
  * Example demonstrating the new physics features:
@@ -9,10 +11,19 @@ import com.rapier.*;
  * - Mass and Inertia
  * - Collision Groups
  * - Damping
+ * 
+ * Uses the data-based API with handles instead of wrapper objects.
  */
 public class NewFeaturesExample {
+    private static RapierNative rapier;
+    private static DoubleByReference x = new DoubleByReference();
+    private static DoubleByReference y = new DoubleByReference();
+    
     public static void main(String[] args) {
         System.out.println("=== New Features Demo ===\n");
+        
+        // Get the native library interface
+        rapier = Rapier.create();
         
         // Test 1: Sensors
         System.out.println("Test 1: Sensors");
@@ -38,105 +49,105 @@ public class NewFeaturesExample {
     }
     
     private static void testSensors() {
-        PhysicsWorld world = new PhysicsWorld(9.81);
+        long world = rapier.rapier_world_create(0.0, -9.81);
         
         // Create a ground
-        RigidBody ground = world.createFixedRigidBody(0.0, 0.0);
-        Collider groundCollider = world.createCuboidCollider(ground, 10.0, 0.5);
+        long ground = rapier.rapier_rigid_body_create_fixed(world, 0.0, 0.0);
+        rapier.rapier_collider_create_cuboid(world, ground, 10.0, 0.5);
         
         // Create a sensor collider (doesn't block objects)
-        RigidBody sensorBody = world.createFixedRigidBody(0.0, 3.0);
-        Collider sensorCollider = world.createCuboidCollider(sensorBody, 2.0, 0.1);
-        sensorCollider.setSensor(true);
+        long sensorBody = rapier.rapier_rigid_body_create_fixed(world, 0.0, 3.0);
+        long sensorCollider = rapier.rapier_collider_create_cuboid(world, sensorBody, 2.0, 0.1);
+        rapier.rapier_collider_set_sensor(world, sensorCollider, true);
         
         // Verify sensor status
-        boolean isSensor = sensorCollider.isSensor();
+        boolean isSensor = rapier.rapier_collider_is_sensor(world, sensorCollider);
         System.out.printf("  Sensor status: %b%n", isSensor);
         
         // Create a falling ball that should pass through the sensor
-        RigidBody ball = world.createDynamicRigidBody(0.0, 5.0);
-        world.createBallCollider(ball, 0.3);
+        long ball = rapier.rapier_rigid_body_create_dynamic(world, 0.0, 5.0);
+        rapier.rapier_collider_create_ball(world, ball, 0.3);
         
         // Simulate
         for (int i = 0; i < 100; i++) {
-            world.step();
+            rapier.rapier_world_step(world);
         }
         
         // Ball should have fallen through sensor and stopped on ground
-        double ballHeight = ball.getPosition().y;
-        System.out.printf("  Ball final height: %.2f (passed through sensor at y=3.0)%n", ballHeight);
+        rapier.rapier_rigid_body_get_position(world, ball, x, y);
+        System.out.printf("  Ball final height: %.2f (passed through sensor at y=3.0)%n", y.getValue());
         System.out.println("  ✓ Sensor collider allows objects to pass through");
         
-        world.destroy();
+        rapier.rapier_world_destroy(world);
     }
     
     private static void testDensity() {
-        PhysicsWorld world = new PhysicsWorld(9.81);
+        long world = rapier.rapier_world_create(0.0, -9.81);
         
         // Create two balls with different densities
-        RigidBody lightBall = world.createDynamicRigidBody(-2.0, 5.0);
-        Collider lightCollider = world.createBallCollider(lightBall, 0.5);
-        lightCollider.setDensity(0.5);
+        long lightBall = rapier.rapier_rigid_body_create_dynamic(world, -2.0, 5.0);
+        long lightCollider = rapier.rapier_collider_create_ball(world, lightBall, 0.5);
+        rapier.rapier_collider_set_density(world, lightCollider, 0.5);
         
-        RigidBody heavyBall = world.createDynamicRigidBody(2.0, 5.0);
-        Collider heavyCollider = world.createBallCollider(heavyBall, 0.5);
-        heavyCollider.setDensity(10.0);
+        long heavyBall = rapier.rapier_rigid_body_create_dynamic(world, 2.0, 5.0);
+        long heavyCollider = rapier.rapier_collider_create_ball(world, heavyBall, 0.5);
+        rapier.rapier_collider_set_density(world, heavyCollider, 10.0);
         
         // Run a simulation step to allow mass recomputation
-        world.step();
+        rapier.rapier_world_step(world);
         
         // Verify densities
-        double lightDensity = lightCollider.getDensity();
-        double heavyDensity = heavyCollider.getDensity();
+        double lightDensity = rapier.rapier_collider_get_density(world, lightCollider);
+        double heavyDensity = rapier.rapier_collider_get_density(world, heavyCollider);
         System.out.printf("  Light ball density: %.1f%n", lightDensity);
         System.out.printf("  Heavy ball density: %.1f%n", heavyDensity);
         
         // Get masses (derived from density and shape)
-        double lightMass = lightBall.getMass();
-        double heavyMass = heavyBall.getMass();
+        double lightMass = rapier.rapier_rigid_body_get_mass(world, lightBall);
+        double heavyMass = rapier.rapier_rigid_body_get_mass(world, heavyBall);
         System.out.printf("  Light ball mass: %.4f%n", lightMass);
         System.out.printf("  Heavy ball mass: %.4f%n", heavyMass);
         System.out.println("  ✓ Density affects mass correctly");
         
-        world.destroy();
+        rapier.rapier_world_destroy(world);
     }
     
     private static void testMassAndInertia() {
-        PhysicsWorld world = new PhysicsWorld(9.81);
+        long world = rapier.rapier_world_create(0.0, -9.81);
         
         // Create a body with a collider
-        RigidBody body = world.createDynamicRigidBody(0.0, 5.0);
-        Collider collider = world.createCuboidCollider(body, 1.0, 0.5);
+        long body = rapier.rapier_rigid_body_create_dynamic(world, 0.0, 5.0);
+        rapier.rapier_collider_create_cuboid(world, body, 1.0, 0.5);
         
         // Run a simulation step to initialize mass properties
-        world.step();
+        rapier.rapier_world_step(world);
         
-        double initialMass = body.getMass();
-        double initialInertia = body.getAngularInertia();
+        double initialMass = rapier.rapier_rigid_body_get_mass(world, body);
+        double initialInertia = rapier.rapier_rigid_body_get_angular_inertia(world, body);
         System.out.printf("  Initial mass: %.4f%n", initialMass);
         System.out.printf("  Initial angular inertia: %.4f%n", initialInertia);
         
         // Add additional mass
-        body.setAdditionalMass(5.0, true);
+        rapier.rapier_rigid_body_set_additional_mass(world, body, 5.0, true);
         
         // Run another step to update mass properties
-        world.step();
+        rapier.rapier_world_step(world);
         
-        double newMass = body.getMass();
-        double newInertia = body.getAngularInertia();
+        double newMass = rapier.rapier_rigid_body_get_mass(world, body);
+        double newInertia = rapier.rapier_rigid_body_get_angular_inertia(world, body);
         System.out.printf("  After adding 5.0 mass - New mass: %.4f%n", newMass);
         System.out.printf("  After adding 5.0 mass - New inertia: %.4f%n", newInertia);
         System.out.println("  ✓ Additional mass increases total mass and inertia");
         
-        world.destroy();
+        rapier.rapier_world_destroy(world);
     }
     
     private static void testCollisionGroups() {
-        PhysicsWorld world = new PhysicsWorld(9.81);
+        long world = rapier.rapier_world_create(0.0, -9.81);
         
         // Create ground that collides with everything
-        RigidBody ground = world.createFixedRigidBody(0.0, 0.0);
-        Collider groundCollider = world.createCuboidCollider(ground, 10.0, 0.5);
+        long ground = rapier.rapier_rigid_body_create_fixed(world, 0.0, 0.0);
+        rapier.rapier_collider_create_cuboid(world, ground, 10.0, 0.5);
         // Default: memberships = 0xFFFFFFFF, filter = 0xFFFFFFFF (collides with all)
         
         // Define collision groups
@@ -146,78 +157,94 @@ public class NewFeaturesExample {
         int ALL_GROUPS = -1; // Same bit pattern as 0xFFFFFFFF
         
         // Create a ball in GROUP_1 that only collides with GROUP_1
-        RigidBody ball1 = world.createDynamicRigidBody(-2.0, 5.0);
-        Collider ball1Collider = world.createBallCollider(ball1, 0.5);
-        ball1Collider.setCollisionGroups(GROUP_1, GROUP_1);
+        long ball1 = rapier.rapier_rigid_body_create_dynamic(world, -2.0, 5.0);
+        long ball1Collider = rapier.rapier_collider_create_ball(world, ball1, 0.5);
+        rapier.rapier_collider_set_collision_groups(world, ball1Collider, GROUP_1, GROUP_1);
         
         // Create a ball in GROUP_2 that only collides with GROUP_2
-        RigidBody ball2 = world.createDynamicRigidBody(0.0, 5.0);
-        Collider ball2Collider = world.createBallCollider(ball2, 0.5);
-        ball2Collider.setCollisionGroups(GROUP_2, GROUP_2);
+        long ball2 = rapier.rapier_rigid_body_create_dynamic(world, 0.0, 5.0);
+        long ball2Collider = rapier.rapier_collider_create_ball(world, ball2, 0.5);
+        rapier.rapier_collider_set_collision_groups(world, ball2Collider, GROUP_2, GROUP_2);
         
         // Create a ball that collides with ALL groups
-        RigidBody ball3 = world.createDynamicRigidBody(2.0, 5.0);
-        Collider ball3Collider = world.createBallCollider(ball3, 0.5);
-        ball3Collider.setCollisionGroups(ALL_GROUPS, ALL_GROUPS);
+        long ball3 = rapier.rapier_rigid_body_create_dynamic(world, 2.0, 5.0);
+        long ball3Collider = rapier.rapier_collider_create_ball(world, ball3, 0.5);
+        rapier.rapier_collider_set_collision_groups(world, ball3Collider, ALL_GROUPS, ALL_GROUPS);
         
         // Verify collision groups
-        int[] groups1 = ball1Collider.getCollisionGroups();
-        int[] groups2 = ball2Collider.getCollisionGroups();
-        System.out.printf("  Ball1 groups: memberships=0x%X, filter=0x%X%n", groups1[0], groups1[1]);
-        System.out.printf("  Ball2 groups: memberships=0x%X, filter=0x%X%n", groups2[0], groups2[1]);
+        IntByReference memberships = new IntByReference();
+        IntByReference filter = new IntByReference();
+        
+        rapier.rapier_collider_get_collision_groups(world, ball1Collider, memberships, filter);
+        System.out.printf("  Ball1 groups: memberships=0x%X, filter=0x%X%n", memberships.getValue(), filter.getValue());
+        
+        rapier.rapier_collider_get_collision_groups(world, ball2Collider, memberships, filter);
+        System.out.printf("  Ball2 groups: memberships=0x%X, filter=0x%X%n", memberships.getValue(), filter.getValue());
         
         // Simulate - balls in different groups should not collide with each other
         // but ball3 (all groups) should collide with the ground
         for (int i = 0; i < 100; i++) {
-            world.step();
+            rapier.rapier_world_step(world);
         }
         
-        System.out.printf("  Ball1 height: %.2f%n", ball1.getPosition().y);
-        System.out.printf("  Ball2 height: %.2f%n", ball2.getPosition().y);
-        System.out.printf("  Ball3 height: %.2f (collides with ground)%n", ball3.getPosition().y);
+        rapier.rapier_rigid_body_get_position(world, ball1, x, y);
+        System.out.printf("  Ball1 height: %.2f%n", y.getValue());
+        
+        rapier.rapier_rigid_body_get_position(world, ball2, x, y);
+        System.out.printf("  Ball2 height: %.2f%n", y.getValue());
+        
+        rapier.rapier_rigid_body_get_position(world, ball3, x, y);
+        System.out.printf("  Ball3 height: %.2f (collides with ground)%n", y.getValue());
         System.out.println("  ✓ Collision groups control which objects can collide");
         
-        world.destroy();
+        rapier.rapier_world_destroy(world);
     }
     
     private static void testDamping() {
-        PhysicsWorld world = new PhysicsWorld(0.0); // No gravity for clearer test
+        long world = rapier.rapier_world_create(0.0, 0.0); // No gravity for clearer test
         
         // Create ground
-        RigidBody ground = world.createFixedRigidBody(0.0, 0.0);
-        world.createCuboidCollider(ground, 10.0, 0.5);
+        long ground = rapier.rapier_rigid_body_create_fixed(world, 0.0, 0.0);
+        rapier.rapier_collider_create_cuboid(world, ground, 10.0, 0.5);
         
         // Create a ball without damping
-        RigidBody noDampingBall = world.createDynamicRigidBody(-3.0, 2.0);
-        world.createBallCollider(noDampingBall, 0.5);
-        noDampingBall.setLinearVelocity(5.0, 0.0, true);
+        long noDampingBall = rapier.rapier_rigid_body_create_dynamic(world, -3.0, 2.0);
+        rapier.rapier_collider_create_ball(world, noDampingBall, 0.5);
+        rapier.rapier_rigid_body_set_linvel(world, noDampingBall, 5.0, 0.0, true);
         
         // Create a ball with high linear damping
-        RigidBody dampedBall = world.createDynamicRigidBody(3.0, 2.0);
-        world.createBallCollider(dampedBall, 0.5);
-        dampedBall.setLinearDamping(2.0);
-        dampedBall.setLinearVelocity(5.0, 0.0, true);
+        long dampedBall = rapier.rapier_rigid_body_create_dynamic(world, 3.0, 2.0);
+        rapier.rapier_collider_create_ball(world, dampedBall, 0.5);
+        rapier.rapier_rigid_body_set_linear_damping(world, dampedBall, 2.0);
+        rapier.rapier_rigid_body_set_linvel(world, dampedBall, 5.0, 0.0, true);
         
         // Verify damping values
-        System.out.printf("  No damping ball - linear damping: %.2f%n", noDampingBall.getLinearDamping());
-        System.out.printf("  Damped ball - linear damping: %.2f%n", dampedBall.getLinearDamping());
+        double noDamping = rapier.rapier_rigid_body_get_linear_damping(world, noDampingBall);
+        double damping = rapier.rapier_rigid_body_get_linear_damping(world, dampedBall);
+        System.out.printf("  No damping ball - linear damping: %.2f%n", noDamping);
+        System.out.printf("  Damped ball - linear damping: %.2f%n", damping);
         
         // Test angular damping
-        RigidBody spinningBody = world.createDynamicRigidBody(0.0, 5.0);
-        world.createCuboidCollider(spinningBody, 0.5, 0.5);
-        spinningBody.setAngularDamping(1.5);
-        System.out.printf("  Spinning body - angular damping: %.2f%n", spinningBody.getAngularDamping());
+        long spinningBody = rapier.rapier_rigid_body_create_dynamic(world, 0.0, 5.0);
+        rapier.rapier_collider_create_cuboid(world, spinningBody, 0.5, 0.5);
+        rapier.rapier_rigid_body_set_angular_damping(world, spinningBody, 1.5);
+        double angularDamping = rapier.rapier_rigid_body_get_angular_damping(world, spinningBody);
+        System.out.printf("  Spinning body - angular damping: %.2f%n", angularDamping);
         
         // Simulate
         for (int i = 0; i < 50; i++) {
-            world.step();
+            rapier.rapier_world_step(world);
         }
         
-        double noDampingX = noDampingBall.getPosition().x;
-        double dampedX = dampedBall.getPosition().x;
+        rapier.rapier_rigid_body_get_position(world, noDampingBall, x, y);
+        double noDampingX = x.getValue();
+        
+        rapier.rapier_rigid_body_get_position(world, dampedBall, x, y);
+        double dampedX = x.getValue();
+        
         System.out.printf("  After simulation - No damping X: %.2f, Damped X: %.2f%n", noDampingX, dampedX);
         System.out.println("  ✓ Damping slows down objects over time");
         
-        world.destroy();
+        rapier.rapier_world_destroy(world);
     }
 }

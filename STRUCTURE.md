@@ -12,28 +12,41 @@ rapier-java/
 ├── pom.xml                             # Maven project configuration
 ├── build.sh                            # Build script for entire project
 ├── run-example.sh                      # Script to run examples
-│
+
 ├── native-lib/                         # Rust FFI layer
 │   ├── Cargo.toml                      # Rust project configuration
 │   └── src/
 │       └── lib.rs                      # C-compatible FFI bindings
-│
+
 ├── src/main/                           # Java bindings
 │   ├── java/com/rapier/
-│   │   ├── PhysicsWorld.java          # Main physics world manager
-│   │   ├── RigidBody.java             # Rigid body wrapper
-│   │   ├── Collider.java              # Collider wrapper
-│   │   ├── Vector2.java               # 2D vector math
-│   │   ├── RapierNative.java          # JNA interface definitions
-│   │   └── NativeLibraryLoader.java   # Native library loader
+│   │   ├── Rapier.java               # Entry point to get native interface
+│   │   ├── RapierNative.java         # JNA interface definitions
+│   │   └── NativeLibraryLoader.java  # Native library loader
 │   └── resources/native/
 │       └── librapier_java_ffi.so      # Compiled native library
-│
+
 └── example/src/main/java/com/rapier/example/
     ├── BouncingBallExample.java       # Basic bouncing ball demo
     ├── MultiObjectExample.java        # Multiple objects demo
-    └── ComprehensiveExample.java      # Complete feature test suite
+    ├── ComprehensiveExample.java      # Complete feature test suite
+    └── NewFeaturesExample.java        # Sensors, mass, damping demo
 ```
+
+## Design Philosophy
+
+This library follows a **data-based API** design, similar to the native Rapier engine:
+
+- **No wrapper classes** for physics objects (rigid bodies, colliders)
+- **Handle-based access** using `long` values representing native pointers
+- **Direct function calls** with no hidden logic or state management
+- **User manages lifecycle** of all physics objects
+
+This approach:
+- Minimizes overhead and abstraction
+- Matches native Rapier patterns exactly
+- Gives users full control over object management
+- Simplifies integration with entity-component systems (ECS)
 
 ## Component Overview
 
@@ -54,107 +67,48 @@ rapier-java/
 - Collision groups for filtering interactions
 - Linear and angular damping
 
-**Functions** (38 total):
-- `rapier_world_create()` - Initialize physics world
-- `rapier_world_destroy()` - Clean up world
-- `rapier_world_step()` - Advance simulation
-- `rapier_rigid_body_create_dynamic()` - Create movable body
-- `rapier_rigid_body_create_fixed()` - Create static body
-- `rapier_rigid_body_get_position()` - Query position
-- `rapier_rigid_body_get_rotation()` - Query rotation
-- `rapier_rigid_body_set_translation()` - Set position
-- `rapier_rigid_body_set_linvel()` - Set velocity
-- `rapier_rigid_body_apply_impulse()` - Apply force
-- `rapier_rigid_body_set_additional_mass()` - Set additional mass
-- `rapier_rigid_body_get_mass()` - Query total mass
-- `rapier_rigid_body_get_angular_inertia()` - Query angular inertia
-- `rapier_rigid_body_set_linear_damping()` - Set linear damping
-- `rapier_rigid_body_get_linear_damping()` - Query linear damping
-- `rapier_rigid_body_set_angular_damping()` - Set angular damping
-- `rapier_rigid_body_get_angular_damping()` - Query angular damping
-- `rapier_collider_create_cuboid()` - Add box shape
-- `rapier_collider_create_ball()` - Add circle shape
-- `rapier_collider_set_restitution()` - Set bounciness
-- `rapier_collider_set_friction()` - Set friction
-- `rapier_collider_set_sensor()` - Set sensor mode
-- `rapier_collider_is_sensor()` - Query sensor mode
-- `rapier_collider_set_density()` - Set density
-- `rapier_collider_get_density()` - Query density
-- `rapier_collider_set_collision_groups()` - Set collision groups
-- `rapier_collider_get_collision_groups()` - Query collision groups
-
 ### 2. Java Bindings
 
-#### PhysicsWorld.java
-- Main entry point for physics simulation
-- Manages native world lifecycle
-- Factory methods for bodies and colliders
-- Automatic resource cleanup
+#### Rapier.java
+- Entry point to get the native interface
+- Singleton pattern for library loading
+- `Rapier.create()` returns the `RapierNative` interface
 
-#### RigidBody.java
-- Represents physical bodies
-- Position and rotation queries
-- Velocity control
-- Impulse application
-- Mass and inertia properties
-- Linear and angular damping
-
-#### Collider.java
-- Collision shape attached to bodies
-- Material properties (friction, restitution)
-- Sensor mode (detect but don't block)
-- Density for mass computation
-- Collision groups for filtering
-
-#### Vector2.java
-- 2D vector mathematics
-- Addition, subtraction, scaling
-- Length, normalization, dot product
+#### RapierNative.java
+- JNA interface definitions
+- Direct mapping to all C FFI functions
+- All functions operate on handles (long values)
 
 #### NativeLibraryLoader.java
 - Automatic native library extraction
 - Cross-platform support
 - Resource-based loading
 
-#### RapierNative.java
-- JNA interface definitions
-- Direct mapping to C FFI functions
-
 ### 3. Example Applications
 
-#### BouncingBallExample
-**Purpose**: Demonstrates basic physics simulation
+All examples demonstrate the data-based API pattern:
 
-**Features**:
-- Gravity
-- Ground collision
-- Ball with restitution (bouncing)
-- Console output showing ball height over time
+```java
+// Get the native interface
+RapierNative rapier = Rapier.create();
 
-**Output**: Shows ball falling, bouncing, and settling
+// Create world (returns handle)
+long world = rapier.rapier_world_create(0.0, -9.81);
 
-#### MultiObjectExample
-**Purpose**: Shows multiple interacting objects
+// Create rigid body (returns handle)
+long body = rapier.rapier_rigid_body_create_dynamic(world, 0.0, 5.0);
 
-**Features**:
-- Multiple bodies with different properties
-- Various restitution values
-- Impulse application
-- Position tracking for multiple objects
+// Create collider (returns handle)
+long collider = rapier.rapier_collider_create_ball(world, body, 0.5);
 
-**Output**: Parallel tracking of three objects
+// Query position using output parameters
+DoubleByReference x = new DoubleByReference();
+DoubleByReference y = new DoubleByReference();
+rapier.rapier_rigid_body_get_position(world, body, x, y);
 
-#### ComprehensiveExample
-**Purpose**: Validates all implemented features
-
-**Tests**:
-1. Basic gravity and collision
-2. Restitution effects (bouncy vs. dead)
-3. Friction effects on sliding
-4. Impulse application
-5. Different collider shapes
-
-**Output**: Pass/fail for each feature test
+// Clean up
+rapier.rapier_world_destroy(world);
+```
 
 ## Build Process
 
@@ -205,12 +159,13 @@ No manual installation or path configuration required.
 - **Optimized native code** (Rust with LTO)
 - **Minimal JNA overhead** (direct function calls)
 - **No garbage collection** of native objects (manual lifecycle)
+- **Zero abstraction cost** - direct passthrough to native
 
 ## API Stability
 
 Current version: 1.0.0
 
-- Core API is complete and functional
+- Data-based API is stable
 - Breaking changes possible before 2.0
 - Based on Rapier 0.18 (older, stable version)
 

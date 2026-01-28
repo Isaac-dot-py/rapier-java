@@ -1,41 +1,50 @@
 package com.rapier.example;
 
 import com.rapier.*;
+import com.sun.jna.ptr.DoubleByReference;
 
 /**
  * Example demonstrating multiple objects with different properties.
+ * Uses the data-based API with handles instead of wrapper objects.
  */
 public class MultiObjectExample {
     public static void main(String[] args) {
         System.out.println("=== Rapier Multi-Object Example ===");
         System.out.println("Simulating multiple falling objects...\n");
         
-        // Create a physics world
-        PhysicsWorld world = new PhysicsWorld(9.81);
+        // Get the native library interface
+        RapierNative rapier = Rapier.create();
+        
+        // Create a physics world with gravity
+        long world = rapier.rapier_world_create(0.0, -9.81);
         
         // Create ground
-        RigidBody ground = world.createFixedRigidBody(0.0, 0.0);
-        Collider groundCollider = world.createCuboidCollider(ground, 100.0, 1.0);
-        groundCollider.setRestitution(0.2);
+        long ground = rapier.rapier_rigid_body_create_fixed(world, 0.0, 0.0);
+        long groundCollider = rapier.rapier_collider_create_cuboid(world, ground, 100.0, 1.0);
+        rapier.rapier_collider_set_restitution(world, groundCollider, 0.2);
         
         // Create a bouncy ball
-        RigidBody bouncyBall = world.createDynamicRigidBody(-5.0, 15.0);
-        Collider bouncyCollider = world.createBallCollider(bouncyBall, 0.5);
-        bouncyCollider.setRestitution(0.9);  // Very bouncy
-        bouncyCollider.setFriction(0.1);
+        long bouncyBall = rapier.rapier_rigid_body_create_dynamic(world, -5.0, 15.0);
+        long bouncyCollider = rapier.rapier_collider_create_ball(world, bouncyBall, 0.5);
+        rapier.rapier_collider_set_restitution(world, bouncyCollider, 0.9);  // Very bouncy
+        rapier.rapier_collider_set_friction(world, bouncyCollider, 0.1);
         
         // Create a heavy box
-        RigidBody box = world.createDynamicRigidBody(0.0, 12.0);
-        Collider boxCollider = world.createCuboidCollider(box, 0.7, 0.7);
-        boxCollider.setRestitution(0.3);  // Less bouncy
-        boxCollider.setFriction(0.5);
+        long box = rapier.rapier_rigid_body_create_dynamic(world, 0.0, 12.0);
+        long boxCollider = rapier.rapier_collider_create_cuboid(world, box, 0.7, 0.7);
+        rapier.rapier_collider_set_restitution(world, boxCollider, 0.3);  // Less bouncy
+        rapier.rapier_collider_set_friction(world, boxCollider, 0.5);
         
         // Create another ball with impulse
-        RigidBody pushedBall = world.createDynamicRigidBody(5.0, 10.0);
-        Collider pushedCollider = world.createBallCollider(pushedBall, 0.4);
-        pushedCollider.setRestitution(0.6);
-        pushedCollider.setFriction(0.2);
-        pushedBall.applyImpulse(-3.0, 2.0, true);  // Give it a push
+        long pushedBall = rapier.rapier_rigid_body_create_dynamic(world, 5.0, 10.0);
+        long pushedCollider = rapier.rapier_collider_create_ball(world, pushedBall, 0.4);
+        rapier.rapier_collider_set_restitution(world, pushedCollider, 0.6);
+        rapier.rapier_collider_set_friction(world, pushedCollider, 0.2);
+        rapier.rapier_rigid_body_apply_impulse(world, pushedBall, -3.0, 2.0, true);  // Give it a push
+        
+        // For querying position
+        DoubleByReference x = new DoubleByReference();
+        DoubleByReference y = new DoubleByReference();
         
         // Simulate
         System.out.println("Time(s) | Bouncy Ball   | Box           | Pushed Ball");
@@ -47,20 +56,26 @@ public class MultiObjectExample {
         for (int i = 0; i <= numSteps; i++) {
             if (i % 24 == 0) {  // Print every 0.4 seconds
                 double time = i * dt;
-                Vector2 pos1 = bouncyBall.getPosition();
-                Vector2 pos2 = box.getPosition();
-                Vector2 pos3 = pushedBall.getPosition();
+                
+                rapier.rapier_rigid_body_get_position(world, bouncyBall, x, y);
+                double x1 = x.getValue(), y1 = y.getValue();
+                
+                rapier.rapier_rigid_body_get_position(world, box, x, y);
+                double x2 = x.getValue(), y2 = y.getValue();
+                
+                rapier.rapier_rigid_body_get_position(world, pushedBall, x, y);
+                double x3 = x.getValue(), y3 = y.getValue();
                 
                 System.out.printf("%6.2fs | (%5.2f,%5.2f) | (%5.2f,%5.2f) | (%5.2f,%5.2f)%n",
-                    time, pos1.x, pos1.y, pos2.x, pos2.y, pos3.x, pos3.y);
+                    time, x1, y1, x2, y2, x3, y3);
             }
             
-            world.step();
+            rapier.rapier_world_step(world);
         }
         
         System.out.println("\n=== All objects have settled ===");
         
         // Clean up
-        world.destroy();
+        rapier.rapier_world_destroy(world);
     }
 }
