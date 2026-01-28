@@ -57,9 +57,17 @@ if (-not (Test-Path $exampleTargetDir)) {
     New-Item -ItemType Directory -Path $exampleTargetDir -Force | Out-Null
 }
 
-# Get Maven classpath
-$classpath = mvn dependency:build-classpath -q -DincludeScope=runtime -Dmdep.outputFile="-" | Out-String
-$classpath = $classpath.Trim()
+# Get Maven classpath using a temporary file (more reliable than stdout capture)
+$tempFile = New-TemporaryFile
+try {
+    mvn dependency:build-classpath -q -DincludeScope=runtime "-Dmdep.outputFile=$($tempFile.FullName)" | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        throw "Failed to get Maven classpath"
+    }
+    $classpath = (Get-Content $tempFile.FullName -Raw).Trim()
+} finally {
+    Remove-Item $tempFile -ErrorAction SilentlyContinue
+}
 
 # Build example classes - use semicolon for Windows classpath separator
 $fullClasspath = "target/classes;$exampleTargetDir;$classpath"
