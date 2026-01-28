@@ -48,8 +48,13 @@ rapier-java/
 - Property setters (position, velocity, friction, restitution)
 - Property getters (position, rotation)
 - Impulse application
+- Sensor support (colliders that detect but don't block)
+- Density and mass properties
+- Angular inertia queries
+- Collision groups for filtering interactions
+- Linear and angular damping
 
-**Functions** (24 total):
+**Functions** (38 total):
 - `rapier_world_create()` - Initialize physics world
 - `rapier_world_destroy()` - Clean up world
 - `rapier_world_step()` - Advance simulation
@@ -60,10 +65,23 @@ rapier-java/
 - `rapier_rigid_body_set_translation()` - Set position
 - `rapier_rigid_body_set_linvel()` - Set velocity
 - `rapier_rigid_body_apply_impulse()` - Apply force
+- `rapier_rigid_body_set_additional_mass()` - Set additional mass
+- `rapier_rigid_body_get_mass()` - Query total mass
+- `rapier_rigid_body_get_angular_inertia()` - Query angular inertia
+- `rapier_rigid_body_set_linear_damping()` - Set linear damping
+- `rapier_rigid_body_get_linear_damping()` - Query linear damping
+- `rapier_rigid_body_set_angular_damping()` - Set angular damping
+- `rapier_rigid_body_get_angular_damping()` - Query angular damping
 - `rapier_collider_create_cuboid()` - Add box shape
 - `rapier_collider_create_ball()` - Add circle shape
 - `rapier_collider_set_restitution()` - Set bounciness
 - `rapier_collider_set_friction()` - Set friction
+- `rapier_collider_set_sensor()` - Set sensor mode
+- `rapier_collider_is_sensor()` - Query sensor mode
+- `rapier_collider_set_density()` - Set density
+- `rapier_collider_get_density()` - Query density
+- `rapier_collider_set_collision_groups()` - Set collision groups
+- `rapier_collider_get_collision_groups()` - Query collision groups
 
 ### 2. Java Bindings
 
@@ -78,10 +96,15 @@ rapier-java/
 - Position and rotation queries
 - Velocity control
 - Impulse application
+- Mass and inertia properties
+- Linear and angular damping
 
 #### Collider.java
 - Collision shape attached to bodies
 - Material properties (friction, restitution)
+- Sensor mode (detect but don't block)
+- Density for mass computation
+- Collision groups for filtering
 
 #### Vector2.java
 - 2D vector mathematics
@@ -193,16 +216,18 @@ Current version: 1.0.0
 
 ## Testing
 
-All three examples serve as integration tests:
+All four examples serve as integration tests:
 - BouncingBallExample: Basic functionality
 - MultiObjectExample: Multi-body interactions
 - ComprehensiveExample: Feature validation
+- NewFeaturesExample: Sensors, density, mass, inertia, collision groups, and damping
 
 To run all tests:
 ```bash
 ./run-example.sh BouncingBallExample
 ./run-example.sh MultiObjectExample
 ./run-example.sh ComprehensiveExample
+./run-example.sh NewFeaturesExample
 ```
 
 Expected: All examples run without errors and produce expected physics behavior.
@@ -212,7 +237,7 @@ Expected: All examples run without errors and produce expected physics behavior.
 Potential additions (not in current scope):
 - 3D physics support
 - Joint constraints
-- Sensors and callbacks
+- Sensor callbacks (intersection events)
 - Query system (raycasting)
 - Event handling
 - Serialization

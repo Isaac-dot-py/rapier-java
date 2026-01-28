@@ -281,3 +281,213 @@ pub extern "C" fn rapier_collider_set_friction(
     }
     false
 }
+
+// Sensor functions
+#[no_mangle]
+pub extern "C" fn rapier_collider_set_sensor(
+    world_handle: WorldHandle,
+    collider_handle: ColliderHandle,
+    is_sensor: bool,
+) -> bool {
+    if let Some(world) = get_world(world_handle) {
+        let handle = rapier2d_f64::geometry::ColliderHandle::from_raw_parts(collider_handle as u32, 0);
+        if let Some(collider) = world.collider_set.get_mut(handle) {
+            collider.set_sensor(is_sensor);
+            return true;
+        }
+    }
+    false
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_collider_is_sensor(
+    world_handle: WorldHandle,
+    collider_handle: ColliderHandle,
+) -> bool {
+    if let Some(world) = get_world(world_handle) {
+        let handle = rapier2d_f64::geometry::ColliderHandle::from_raw_parts(collider_handle as u32, 0);
+        if let Some(collider) = world.collider_set.get(handle) {
+            return collider.is_sensor();
+        }
+    }
+    false
+}
+
+// Density functions
+#[no_mangle]
+pub extern "C" fn rapier_collider_set_density(
+    world_handle: WorldHandle,
+    collider_handle: ColliderHandle,
+    density: f64,
+) -> bool {
+    if let Some(world) = get_world(world_handle) {
+        let handle = rapier2d_f64::geometry::ColliderHandle::from_raw_parts(collider_handle as u32, 0);
+        if let Some(collider) = world.collider_set.get_mut(handle) {
+            collider.set_density(density);
+            return true;
+        }
+    }
+    false
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_collider_get_density(
+    world_handle: WorldHandle,
+    collider_handle: ColliderHandle,
+) -> f64 {
+    if let Some(world) = get_world(world_handle) {
+        let handle = rapier2d_f64::geometry::ColliderHandle::from_raw_parts(collider_handle as u32, 0);
+        if let Some(collider) = world.collider_set.get(handle) {
+            return collider.density();
+        }
+    }
+    0.0
+}
+
+// Collision groups functions
+#[no_mangle]
+pub extern "C" fn rapier_collider_set_collision_groups(
+    world_handle: WorldHandle,
+    collider_handle: ColliderHandle,
+    memberships: u32,
+    filter: u32,
+) -> bool {
+    if let Some(world) = get_world(world_handle) {
+        let handle = rapier2d_f64::geometry::ColliderHandle::from_raw_parts(collider_handle as u32, 0);
+        if let Some(collider) = world.collider_set.get_mut(handle) {
+            let groups = InteractionGroups::new(memberships.into(), filter.into());
+            collider.set_collision_groups(groups);
+            return true;
+        }
+    }
+    false
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_collider_get_collision_groups(
+    world_handle: WorldHandle,
+    collider_handle: ColliderHandle,
+    out_memberships: *mut u32,
+    out_filter: *mut u32,
+) -> bool {
+    if let Some(world) = get_world(world_handle) {
+        let handle = rapier2d_f64::geometry::ColliderHandle::from_raw_parts(collider_handle as u32, 0);
+        if let Some(collider) = world.collider_set.get(handle) {
+            let groups = collider.collision_groups();
+            unsafe {
+                *out_memberships = groups.memberships.bits();
+                *out_filter = groups.filter.bits();
+            }
+            return true;
+        }
+    }
+    false
+}
+
+// Mass functions for rigid bodies
+#[no_mangle]
+pub extern "C" fn rapier_rigid_body_set_additional_mass(
+    world_handle: WorldHandle,
+    body_handle: RigidBodyHandle,
+    additional_mass: f64,
+    wake_up: bool,
+) -> bool {
+    if let Some(world) = get_world(world_handle) {
+        let handle = rapier2d_f64::dynamics::RigidBodyHandle::from_raw_parts(body_handle as u32, 0);
+        if let Some(rb) = world.rigid_body_set.get_mut(handle) {
+            rb.set_additional_mass(additional_mass, wake_up);
+            return true;
+        }
+    }
+    false
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_rigid_body_get_mass(
+    world_handle: WorldHandle,
+    body_handle: RigidBodyHandle,
+) -> f64 {
+    if let Some(world) = get_world(world_handle) {
+        let handle = rapier2d_f64::dynamics::RigidBodyHandle::from_raw_parts(body_handle as u32, 0);
+        if let Some(rb) = world.rigid_body_set.get(handle) {
+            return rb.mass();
+        }
+    }
+    0.0
+}
+
+// Inertia functions for rigid bodies
+#[no_mangle]
+pub extern "C" fn rapier_rigid_body_get_angular_inertia(
+    world_handle: WorldHandle,
+    body_handle: RigidBodyHandle,
+) -> f64 {
+    if let Some(world) = get_world(world_handle) {
+        let handle = rapier2d_f64::dynamics::RigidBodyHandle::from_raw_parts(body_handle as u32, 0);
+        if let Some(rb) = world.rigid_body_set.get(handle) {
+            return rb.mass_properties().local_mprops.principal_inertia();
+        }
+    }
+    0.0
+}
+
+// Damping functions
+#[no_mangle]
+pub extern "C" fn rapier_rigid_body_set_linear_damping(
+    world_handle: WorldHandle,
+    body_handle: RigidBodyHandle,
+    damping: f64,
+) -> bool {
+    if let Some(world) = get_world(world_handle) {
+        let handle = rapier2d_f64::dynamics::RigidBodyHandle::from_raw_parts(body_handle as u32, 0);
+        if let Some(rb) = world.rigid_body_set.get_mut(handle) {
+            rb.set_linear_damping(damping);
+            return true;
+        }
+    }
+    false
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_rigid_body_get_linear_damping(
+    world_handle: WorldHandle,
+    body_handle: RigidBodyHandle,
+) -> f64 {
+    if let Some(world) = get_world(world_handle) {
+        let handle = rapier2d_f64::dynamics::RigidBodyHandle::from_raw_parts(body_handle as u32, 0);
+        if let Some(rb) = world.rigid_body_set.get(handle) {
+            return rb.linear_damping();
+        }
+    }
+    0.0
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_rigid_body_set_angular_damping(
+    world_handle: WorldHandle,
+    body_handle: RigidBodyHandle,
+    damping: f64,
+) -> bool {
+    if let Some(world) = get_world(world_handle) {
+        let handle = rapier2d_f64::dynamics::RigidBodyHandle::from_raw_parts(body_handle as u32, 0);
+        if let Some(rb) = world.rigid_body_set.get_mut(handle) {
+            rb.set_angular_damping(damping);
+            return true;
+        }
+    }
+    false
+}
+
+#[no_mangle]
+pub extern "C" fn rapier_rigid_body_get_angular_damping(
+    world_handle: WorldHandle,
+    body_handle: RigidBodyHandle,
+) -> f64 {
+    if let Some(world) = get_world(world_handle) {
+        let handle = rapier2d_f64::dynamics::RigidBodyHandle::from_raw_parts(body_handle as u32, 0);
+        if let Some(rb) = world.rigid_body_set.get(handle) {
+            return rb.angular_damping();
+        }
+    }
+    0.0
+}

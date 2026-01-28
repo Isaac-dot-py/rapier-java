@@ -101,4 +101,67 @@ public class RigidBody {
     public long getHandle() {
         return bodyHandle;
     }
+    
+    /**
+     * Sets additional mass for this rigid body.
+     * This mass is added to the mass computed from attached colliders.
+     * The total angular inertia will be scaled automatically based on this additional mass.
+     * @param additionalMass The additional mass value
+     * @param wakeUp Whether to wake up the body if it's sleeping
+     */
+    public void setAdditionalMass(double additionalMass, boolean wakeUp) {
+        nativeLib.rapier_rigid_body_set_additional_mass(worldHandle, bodyHandle, additionalMass, wakeUp);
+    }
+    
+    /**
+     * Gets the total mass of this rigid body.
+     * This includes mass from attached colliders and any additional mass.
+     * @return The total mass
+     */
+    public double getMass() {
+        return nativeLib.rapier_rigid_body_get_mass(worldHandle, bodyHandle);
+    }
+    
+    /**
+     * Gets the angular inertia (moment of inertia) of this rigid body.
+     * Angular inertia determines resistance to angular acceleration.
+     * @return The angular inertia value
+     */
+    public double getAngularInertia() {
+        return nativeLib.rapier_rigid_body_get_angular_inertia(worldHandle, bodyHandle);
+    }
+    
+    /**
+     * Sets the linear damping coefficient of this rigid body.
+     * Damping progressively slows down the body over time.
+     * @param damping The linear damping coefficient (0.0 = no damping)
+     */
+    public void setLinearDamping(double damping) {
+        nativeLib.rapier_rigid_body_set_linear_damping(worldHandle, bodyHandle, damping);
+    }
+    
+    /**
+     * Gets the linear damping coefficient of this rigid body.
+     * @return The linear damping coefficient
+     */
+    public double getLinearDamping() {
+        return nativeLib.rapier_rigid_body_get_linear_damping(worldHandle, bodyHandle);
+    }
+    
+    /**
+     * Sets the angular damping coefficient of this rigid body.
+     * Angular damping progressively slows down rotational movement.
+     * @param damping The angular damping coefficient (0.0 = no damping)
+     */
+    public void setAngularDamping(double damping) {
+        nativeLib.rapier_rigid_body_set_angular_damping(worldHandle, bodyHandle, damping);
+    }
+    
+    /**
+     * Gets the angular damping coefficient of this rigid body.
+     * @return The angular damping coefficient
+     */
+    public double getAngularDamping() {
+        return nativeLib.rapier_rigid_body_get_angular_damping(worldHandle, bodyHandle);
+    }
 }
