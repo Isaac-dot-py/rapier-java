@@ -9,6 +9,9 @@ import java.io.File;
  * 
  * Example usage:
  * <pre>
+ * import com.rapier.*;
+ * import com.sun.jna.ptr.DoubleByReference;
+ * 
  * RapierNative rapier = Rapier.create();
  * 
  * // Create a world with gravity

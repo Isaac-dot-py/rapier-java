@@ -89,6 +89,9 @@ This approach:
 All examples demonstrate the data-based API pattern:
 
 ```java
+import com.rapier.*;
+import com.sun.jna.ptr.DoubleByReference;
+
 // Get the native interface
 RapierNative rapier = Rapier.create();
 
