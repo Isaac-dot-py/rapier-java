@@ -145,57 +145,62 @@ public class NewFeaturesExample {
     private static void testCollisionGroups() {
         long world = rapier.rapier_world_create(0.0, -9.81);
         
-        // Create ground that collides with everything
-        long ground = rapier.rapier_rigid_body_create_fixed(world, 0.0, 0.0);
-        rapier.rapier_collider_create_cuboid(world, ground, 10.0, 0.5);
-        // Default: memberships = 0xFFFFFFFF, filter = 0xFFFFFFFF (collides with all)
-        
         // Define collision groups
-        // In Java, use -1 for "all groups" (0xFFFFFFFF) since Java uses signed integers
-        int GROUP_1 = 1;  // 0b0001
-        int GROUP_2 = 2;  // 0b0010
-        int ALL_GROUPS = -1; // Same bit pattern as 0xFFFFFFFF
+        int GROUP_A = 1;  // 0b0001 - for ball A
+        int GROUP_B = 2;  // 0b0010 - for ball B
+        int BOTH_GROUPS = GROUP_A | GROUP_B;  // 0b0011 - collides with both
         
-        // Create a ball in GROUP_1 that only collides with GROUP_1
-        long ball1 = rapier.rapier_rigid_body_create_dynamic(world, -2.0, 5.0);
-        long ball1Collider = rapier.rapier_collider_create_ball(world, ball1, 0.5);
-        rapier.rapier_collider_set_collision_groups(world, ball1Collider, GROUP_1, GROUP_1);
+        // Create BOTTOM ground (y=0) - collides with BOTH balls
+        long bottomGround = rapier.rapier_rigid_body_create_fixed(world, 0.0, 0.0);
+        long bottomCollider = rapier.rapier_collider_create_cuboid(world, bottomGround, 10.0, 0.5);
+        rapier.rapier_collider_set_collision_groups(world, bottomCollider, BOTH_GROUPS, BOTH_GROUPS);
         
-        // Create a ball in GROUP_2 that only collides with GROUP_2
-        long ball2 = rapier.rapier_rigid_body_create_dynamic(world, 0.0, 5.0);
-        long ball2Collider = rapier.rapier_collider_create_ball(world, ball2, 0.5);
-        rapier.rapier_collider_set_collision_groups(world, ball2Collider, GROUP_2, GROUP_2);
+        // Create TOP ground (y=3) - only collides with Ball A (GROUP_A)
+        long topGround = rapier.rapier_rigid_body_create_fixed(world, 0.0, 3.0);
+        long topCollider = rapier.rapier_collider_create_cuboid(world, topGround, 10.0, 0.5);
+        rapier.rapier_collider_set_collision_groups(world, topCollider, GROUP_A, GROUP_A);
         
-        // Create a ball that collides with ALL groups
-        long ball3 = rapier.rapier_rigid_body_create_dynamic(world, 2.0, 5.0);
-        long ball3Collider = rapier.rapier_collider_create_ball(world, ball3, 0.5);
-        rapier.rapier_collider_set_collision_groups(world, ball3Collider, ALL_GROUPS, ALL_GROUPS);
+        // Ball A (GROUP_A) - will stop at TOP ground
+        long ballA = rapier.rapier_rigid_body_create_dynamic(world, -2.0, 6.0);
+        long ballACollider = rapier.rapier_collider_create_ball(world, ballA, 0.5);
+        rapier.rapier_collider_set_collision_groups(world, ballACollider, GROUP_A, GROUP_A);
+        
+        // Ball B (GROUP_B) - will pass through TOP ground and stop at BOTTOM ground
+        long ballB = rapier.rapier_rigid_body_create_dynamic(world, 2.0, 6.0);
+        long ballBCollider = rapier.rapier_collider_create_ball(world, ballB, 0.5);
+        rapier.rapier_collider_set_collision_groups(world, ballBCollider, GROUP_B, GROUP_B);
         
         // Verify collision groups
         IntByReference memberships = new IntByReference();
         IntByReference filter = new IntByReference();
         
-        rapier.rapier_collider_get_collision_groups(world, ball1Collider, memberships, filter);
-        System.out.printf("  Ball1 groups: memberships=0x%X, filter=0x%X%n", memberships.getValue(), filter.getValue());
+        rapier.rapier_collider_get_collision_groups(world, topCollider, memberships, filter);
+        System.out.printf("  Top ground groups: memberships=0x%X, filter=0x%X (only GROUP_A)%n", 
+            memberships.getValue(), filter.getValue());
         
-        rapier.rapier_collider_get_collision_groups(world, ball2Collider, memberships, filter);
-        System.out.printf("  Ball2 groups: memberships=0x%X, filter=0x%X%n", memberships.getValue(), filter.getValue());
+        rapier.rapier_collider_get_collision_groups(world, bottomCollider, memberships, filter);
+        System.out.printf("  Bottom ground groups: memberships=0x%X, filter=0x%X (both groups)%n", 
+            memberships.getValue(), filter.getValue());
         
-        // Simulate - balls in different groups should not collide with each other
-        // but ball3 (all groups) should collide with the ground
-        for (int i = 0; i < 100; i++) {
+        // Simulate
+        for (int i = 0; i < 150; i++) {
             rapier.rapier_world_step(world);
         }
         
-        rapier.rapier_rigid_body_get_position(world, ball1, x, y);
-        System.out.printf("  Ball1 height: %.2f%n", y.getValue());
+        rapier.rapier_rigid_body_get_position(world, ballA, x, y);
+        double ballAHeight = y.getValue();
+        System.out.printf("  Ball A height: %.2f (stopped at top ground y=3.0)%n", ballAHeight);
         
-        rapier.rapier_rigid_body_get_position(world, ball2, x, y);
-        System.out.printf("  Ball2 height: %.2f%n", y.getValue());
+        rapier.rapier_rigid_body_get_position(world, ballB, x, y);
+        double ballBHeight = y.getValue();
+        System.out.printf("  Ball B height: %.2f (passed through top, stopped at bottom y=0)%n", ballBHeight);
         
-        rapier.rapier_rigid_body_get_position(world, ball3, x, y);
-        System.out.printf("  Ball3 height: %.2f (collides with ground)%n", y.getValue());
-        System.out.println("  [OK] Collision groups control which objects can collide");
+        // Verify the test actually proves collision groups work
+        if (ballAHeight > 2.5 && ballBHeight < 1.5) {
+            System.out.println("  [OK] Collision groups control which objects can collide");
+        } else {
+            System.out.println("  [FAIL] Collision groups test did not produce expected results");
+        }
         
         rapier.rapier_world_destroy(world);
     }
