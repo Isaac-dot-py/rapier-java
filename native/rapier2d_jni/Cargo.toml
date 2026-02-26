@@ -1,0 +1,11 @@
+[package]
+name = "rapier2d_jni"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+rapier2d-f64 = "0.32.0"
+jni = "0.21"

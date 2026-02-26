@@ -1,14 +1,20 @@
 plugins {
     id 'java'
     id 'application'
+    id 'maven-publish'
+    id 'com.diffplug.spotless' version '8.1.0'
 }
 
 group = 'com.rapier'
-version = '0.1.0-SNAPSHOT'
+version = '1.0'
 
 def javaVersion = JavaVersion.VERSION_17
-sourceCompatibility = javaVersion
-targetCompatibility = javaVersion
+java {
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    withJavadocJar()
+    withSourcesJar()
+}
 
 sourceSets {
     main {
@@ -44,7 +50,7 @@ def bindgenDir = file('build/generated')
 def nativeBuildDir = file("${buildDir}/native")
 
 // Build the Rust JNI library
- tasks.register('buildNative', Exec) {
+tasks.register('buildNative', Exec) {
     workingDir nativeProjectDir
     commandLine 'cargo', 'build', '--release'
 }
@@ -58,7 +64,7 @@ tasks.register('generateBindings', Exec) {
 
     workingDir nativeProjectDir
     commandLine 'cargo', '+nightly', 'rustdoc', '-p', 'rapier2d-f64', '--lib', '--',
-        '-Z', 'unstable-options', '--output-format', 'json'
+            '-Z', 'unstable-options', '--output-format', 'json'
     doLast {
         exec {
             commandLine 'python', "${projectDir}/tools/rapier_bindgen/generate_bindings.py",
@@ -72,7 +78,7 @@ tasks.register('generateBindings', Exec) {
 }
 
 // Copy the library into build/native
- tasks.register('copyNative', Copy) {
+tasks.register('copyNative', Copy) {
     dependsOn 'buildNative'
     from(new File(nativeProjectDir, 'target/release')) {
         include nativeLibName
@@ -80,7 +86,7 @@ tasks.register('generateBindings', Exec) {
     into nativeBuildDir
 }
 
- tasks.register('runExample', JavaExec) {
+tasks.register('runExample', JavaExec) {
     dependsOn 'classes'
     dependsOn 'copyNative'
     classpath = sourceSets.main.runtimeClasspath
@@ -88,6 +94,108 @@ tasks.register('generateBindings', Exec) {
     systemProperty 'java.library.path', nativeBuildDir.absolutePath
 }
 
- tasks.named('build') {
+tasks.named('build') {
     dependsOn 'copyNative'
+}
+
+tasks.named("jar") {
+    dependsOn copyNative
+    from(nativeBuildDir) {
+        into "natives"
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = 'rapier-java'
+            from components.java
+            pom {
+                name = 'Rapier Java'
+                description = 'Java bindings for the Rapier physics engine'
+                url = 'https://github.com/Isaac-dot-py/rapier-java'
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'Isaac-dot-py'
+                        name = 'Isaac Barker'
+                        email = 'barkerisaacd@gmail.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/Isaac-dot-py/rapier-java.git'
+                    developerConnection = 'scm:git:ssh://github.com/Isaac-dot-py/rapier-java.git'
+                    url = 'https://github.com/Isaac-dot-py/rapier-java'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = "localBuild"
+            url = layout.buildDirectory.dir(".m2")
+        }
+    }
+}
+
+spotless {
+    java {
+        target fileTree('.') {
+            include '**/*.java'
+            exclude 'build/**', '**/build-*/**', 'src/main/java/frc/robot/Main.java', '**/BuildConstants.java' // Main has ascii art, don't touch
+        }
+
+        toggleOffOn()
+        trimTrailingWhitespace()
+        endWithNewline()
+
+        cleanthat()
+                .groupArtifact('org.recordrobotics.cleanthat:java')
+                .version("2.26")
+                .sourceCompatibility("17")
+                .addMutator("UseExplicitTypes")
+                .addMutator('SafeAndConsensual')
+                .addMutator('UnnecessaryFullyQualifiedName')
+                .excludeMutator('LocalVariableTypeInference')
+                .includeDraft(false)
+
+        removeUnusedImports()
+
+        palantirJavaFormat()
+        formatAnnotations()
+    }
+    groovyGradle {
+        target fileTree('.') {
+            include '**/*.gradle'
+            exclude '**/build/**', '**/build-*/**'
+        }
+        greclipse()
+        leadingTabsToSpaces(4)
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+    format 'xml', {
+        target fileTree('.') {
+            include '**/*.xml'
+            exclude '**/build/**', '**/build-*/**'
+        }
+        eclipseWtp('xml')
+        trimTrailingWhitespace()
+        leadingTabsToSpaces(2)
+        endWithNewline()
+    }
+    format 'misc', {
+        target fileTree('.') {
+            include '**/*.md', '**/.gitignore'
+            exclude '**/build/**', '**/build-*/**'
+        }
+        trimTrailingWhitespace()
+        leadingTabsToSpaces(2)
+        endWithNewline()
+    }
 }
